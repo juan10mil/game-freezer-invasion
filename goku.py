@@ -24,13 +24,17 @@ class Goku:
         
     def update(self):
         """Actualiza la posiciono de la nave en funcion de flag"""
-        if self.moving_right:
+        if self.moving_right and self.screen_rect.right > self.rect.right:
             self.x += self.settings.goku_velocidad #mueve un casillero a la 
                                                 #derecha #en el eje x
-        if self.moving_left:
+        if self.moving_left and 0 < self.rect.left: #comienza 0 de la izquierda
             self.x -= self.settings.goku_velocidad
         self.rect.x = self.x #solo toma la porcion entera
-                                        
+
+    def centrar(self):
+        """Centra a goku en la pantalla"""
+        self.rect.midbottom = self.screen_rect.midbottom
+        self.x = float(self.rect.x)                          
 
     def blitme(self):
         """Dibuja la nave en la ubicacion actual"""
