@@ -7,7 +7,7 @@ from kame import Kame
 from freezer import Freezer
 from estadisticas_game import GameStats
 
-class AlienInvasion:
+class FreezerInvasion:
     """Clase general para gestionar los recursos y el comportamiento
     del juego"""
     def __init__(self):
@@ -224,5 +224,5 @@ class AlienInvasion:
 if __name__ == '__main__': #se ejecuta si se llama al archivo directamente
     #dice lo que se tiene que ejecutar al momento de abrir el archivo
     #hace una instancia del juego y lo ejecuta:
-    a_i = AlienInvasion()
+    a_i = FreezerInvasion()
     a_i.run_game()
