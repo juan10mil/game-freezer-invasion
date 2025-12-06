@@ -1,8 +1,10 @@
 import pygame
-class Goku:
+from pygame.sprite import Sprite
+class Goku(Sprite): #hace que herede para un grupo de vidas de goku
     """Clase para gestionar al jugador"""
     def __init__(self,juego):
         """Inicializa a goku"""
+        super().__init__()
         self.screen = juego.screen #es de la pantalla
         self.settings = juego.settings
         self.screen_rect = juego.screen.get_rect() # los trata como rectangulos

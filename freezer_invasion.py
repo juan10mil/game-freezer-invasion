@@ -6,6 +6,8 @@ from goku import Goku
 from kame import Kame
 from freezer import Freezer
 from estadisticas_game import GameStats
+from boton import Boton
+from scoreboard import ScoreTabla
 
 class FreezerInvasion:
     """Clase general para gestionar los recursos y el comportamiento
@@ -24,6 +26,7 @@ class FreezerInvasion:
         #si no se especifica la tupla, es la pantalla completa
 
         self.stats = GameStats(self)
+        self.score = ScoreTabla(self)
 
         self.goku = Goku(self) #este self, aparece como "juego" en goku.py
         self.kames = pygame.sprite.Group()#devuelve un grupo para almacenar 
@@ -32,7 +35,10 @@ class FreezerInvasion:
         self._crear_flota()
 
         #inicia el juego en estado activo:
-        self.game_active = True
+        self.game_active = False
+
+        #Crea el boton Play:
+        self.play_boton = Boton(self, 'Play')
 
     def _crear_freezer(self, actual_x, actual_y):
         """Crea un alienigena y lo coloca en la fila y demas filas"""
@@ -44,9 +50,11 @@ class FreezerInvasion:
 
     def _goku_freezer_golpe(self):
         """Responde al impacto entre estos dos titanes"""
-        if self.stats.vidas_restantes > 0 :
+        if self.stats.vidas_restantes > 1 :
             #disminuye vidas:
             self.stats.vidas_restantes -= 1
+
+            self.score.prep_gokus()
 
             #se deshace de freezers y los kames:
             self.freezers.empty()
@@ -60,6 +68,7 @@ class FreezerInvasion:
             sleep(0.5) #pausa el programa por medio segundo
         else:
             self.game_active = False
+            pygame.mouse.set_visible(True)#hace visible el raton
 
     def _crear_flota(self):
         """Crea la flota de freezers"""
@@ -135,7 +144,31 @@ class FreezerInvasion:
                 self._check_keydown_events(event)
             elif event.type == pygame.KEYUP:
                 self._check_keyup_events(event)
+            elif event.type == pygame.MOUSEBUTTONDOWN :
+                mouse_posicion = pygame.mouse.get_pos() #devuelve una tupla que
+                #contiene las coordenadas de x e y del cursor cuando hace clic
+                self._check_play_boton(mouse_posicion)
                                
+    def _check_play_boton(self, pos):
+        """Inicia el juego cuando el jugador hace clic en play"""
+        boton_clic = self.play_boton.rect.collidepoint(pos)
+        if boton_clic and not self.game_active: #metodo que comprueba si el
+            #punto clic del raton colisiona con la region definida por el rect
+            #del boton play
+            self.settings.inicializar_dinamica_settings()
+            self.stats.reset_stats()
+            self.game_active = True
+            self.score.prep_score() #perpara un marcador de 0
+            self.score.prep_level()
+            self.score.prep_gokus()
+            #se deshace de los freezers y kames:
+            self.freezers.empty()
+            self.kames.empty()
+            #crea una nueva flota:
+            self._crear_flota()
+            self.goku.centrar()
+            pygame.mouse.set_visible(False) #oculta el raton en pantalla
+
 
 
     def _check_keydown_events(self, event):
@@ -179,6 +212,17 @@ class FreezerInvasion:
         self.freezers.draw(self.screen) #pygame dibuja cada elemetno del grupo
         #en la posicion definida por su atributo rect, self.screen es la 
         #superficie donde se dibuja los elementos
+
+        #dibuja la infomracion de la puntuacion:
+        self.score.show_score()
+
+        #dibuja el boton para jugar si el juego esta inactivo:
+        if not self.game_active:
+            self.play_boton.draw_boton() #se dibuja despues de los demas 
+            #elementos, para que sea visible y este por encima de todos los 
+            #demas
+
+
         pygame.display.flip()#Hace visible la última pantalla dibujada
     
 
@@ -207,10 +251,23 @@ class FreezerInvasion:
         #y el valor es freezer, cuando se solapan se añade un valor al diccionar
         #Los argumentos True indican a pygame que borre las balas y aliesn que 
         #han chocado(True: borra kame, True: borra freezer)
+        if colisiones:
+            for freezers in colisiones.values():#se pasa en un bucle por todos 
+                #los valores que tiene, cada valor es una lista de freezers
+                #alcanzados por un splo kame
+                self.stats.score += self.settings.freezer_points * len(freezers)
+                #len freezers indica la longitud de la lista de freezers que 
+                #colisionaron con un solo kame
+            self.score.prep_score()
+            self.score.check_high_score()
         if not self.freezers:
             #detruye las balas existentes y crea una flota nueva
             self.kames.empty() #vacia el grupo de los kames
             self._crear_flota()
+            self.settings.incrementar_velocidad()
+            #aumenta el nivel:
+            self.stats.level += 1
+            self.score.prep_level()
     
     def _check_freezers_abajo(self):
         """Comprueba si freezer llego al borde de abajo"""
